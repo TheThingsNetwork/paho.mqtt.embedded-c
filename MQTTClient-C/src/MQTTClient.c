@@ -15,6 +15,8 @@
  *******************************************************************************/
 #include "MQTTClient.h"
 
+#include <string.h>
+
 static void NewMessageData(MessageData *md, MQTTString *aTopicName, MQTTMessage *aMessage)
 {
    md->topicName = aTopicName;
@@ -529,6 +531,17 @@ int MQTTUnsubscribe(MQTTClient *c, const char *topicFilter)
    }
    else
       rc = FAILURE;
+
+   // We have to find the right message handler and remove it.
+   for (size_t i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
+   {
+      if (c->messageHandlers[i].topicFilter != NULL && !strcmp(c->messageHandlers[i].topicFilter, topicFilter))
+      {
+         c->messageHandlers[i].topicFilter = NULL;
+         c->messageHandlers[i].fp = NULL;
+         break;
+      }
+   }
 
 exit:
    return rc;
